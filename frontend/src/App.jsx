@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+const recognition = new (window.SpeechRecognition ||
+  window.webkitSpeechRecognition)();
 recognition.lang = "en-US";
 recognition.interimResults = false;
 
@@ -44,13 +45,12 @@ export default function App() {
     const data = await res.json();
 
     if (data.end) {
-        setFeedback(data.feedback);
-        setTimeout(() => {
-          resetSession();   // 初期状態に戻す
-        }, 5000);
-        return; // 終了なので返す
-      }
-
+      setFeedback(data.feedback);
+      setTimeout(() => {
+        resetSession(); // 初期状態に戻す
+      }, 5000);
+      return; // 終了なので返す
+    }
 
     if (data.end) {
       setFeedback(data.feedback);
@@ -68,15 +68,23 @@ export default function App() {
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
       <h1>🎙️ 英会話ボット（10ターンで終了）</h1>
+      <h2>今nターン目</h2>
       <div style={{ marginBottom: "1rem" }}>
         {messages.map((msg, i) => (
           <div key={i}>
-            <strong>{msg.role === "user" ? "あなた" : "AI"}:</strong> {msg.content}
+            <strong>{msg.role === "user" ? "あなた" : "AI"}:</strong>{" "}
+            {msg.content}
           </div>
         ))}
       </div>
       {feedback && (
-        <div style={{ background: "red", padding: "10px", borderLeft: "5px solid red" }}>
+        <div
+          style={{
+            background: "red",
+            padding: "10px",
+            borderLeft: "5px solid red",
+          }}
+        >
           <strong>💬 フィードバック:</strong> {feedback}
         </div>
       )}
@@ -89,7 +97,7 @@ export default function App() {
           padding: "10px 20px",
           border: "none",
           borderRadius: "5px",
-          cursor: "pointer"
+          cursor: "pointer",
         }}
       >
         {isListening ? "🎧 聞き取り中..." : "🎤 話す"}
