@@ -103,7 +103,7 @@ export default function App() {
         alignItems: "center",
       }}
     >
-      <h1>🎙️ 英会話ボット（10ターンで終了）</h1>
+      <h1>🎙️ 英会話ボット</h1>
       <div style={{ marginBottom: "1rem", textAlign: "center" }}>
         {messages.map((msg, i) => (
           <div key={i}>
