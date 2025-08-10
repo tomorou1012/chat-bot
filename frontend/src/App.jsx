@@ -126,12 +126,6 @@ export default function App() {
           <span>English Conversation Bot</span>
         </div>
         <div className="header-actions">
-          <button
-            className="btn btn-ghost"
-            onClick={() => window.open("http://127.0.0.1:8000/docs", "_blank")}
-          >
-            API Docs
-          </button>
           <button className="btn btn-danger" onClick={endSession} disabled={isListening}>
             End session
           </button>
@@ -178,9 +172,6 @@ export default function App() {
       <footer className="footer">
         <button className="btn btn-primary" onClick={startListening} disabled={isListening}>
           {isListening ? "Listening..." : "🎤 Speak"}
-        </button>
-        <button className="btn btn-ghost" onClick={() => window.speechSynthesis.cancel()}>
-          🔇 Stop voice
         </button>
       </footer>
     </div>
