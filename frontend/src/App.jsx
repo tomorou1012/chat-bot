@@ -11,7 +11,17 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [showResetButton, setShowResetButton] = useState(false);
+  const [translations, setTranslations] = useState({}); // 翻訳結果を保持
+  // 翻訳API呼び出し関数
+  const handleTranslate = async (msg, i) => {
+    const res = await fetch("http://localhost:8000/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: msg.content, direction: "en2ja" }),
+    });
+    const data = await res.json();
+    setTranslations((prev) => ({ ...prev, [i]: data.translated }));
+  };
 
   const resetSession = () => {
     // 進行中の処理を止める（念のため）
@@ -42,7 +52,7 @@ export default function App() {
 
       // フィードバックを表示（自動リセットはしない）
       setFeedback(data.feedback);
-      setShowResetButton(true);  // 「Start over」ボタンを出す
+      setShowResetButton(true); // 「Start over」ボタンを出す
 
       // マイクと読み上げは停止（任意）
       recognitionRef.current?.abort?.();
@@ -80,28 +90,40 @@ export default function App() {
       utter.lang = "en-US";
       synth.speak(utter);
     }
-
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      {/* タイトル＋End sessionボタン */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>🎙️ 英会話ボット</h1>
-        <button
-          onClick={endSession}
-          disabled={isListening}
-          style={{ padding: "6px 10px" }}
-        >
-          End session
-        </button>
-      </div>
-
-      <div style={{ marginBottom: "1rem" }}>
+    <div
+      style={{
+        padding: "20px",
+        maxWidth: "600px",
+        margin: "auto",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <h1>🎙️ 英会話ボット（10ターンで終了）</h1>
+      <div style={{ marginBottom: "1rem", textAlign: "center" }}>
         {messages.map((msg, i) => (
           <div key={i}>
             <strong>{msg.role === "user" ? "あなた" : "AI"}:</strong>{" "}
             {msg.content}
+            {msg.role === "assistant" && (
+              <>
+                <button
+                  style={{ marginLeft: "1em" }}
+                  onClick={() => handleTranslate(msg, i)}
+                >
+                  翻訳
+                </button>
+                {translations[i] && (
+                  <span style={{ color: "gray", marginLeft: "1em" }}>
+                    和訳: {translations[i]}
+                  </span>
+                )}
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -143,5 +165,4 @@ export default function App() {
       </button>
     </div>
   );
-
 }
