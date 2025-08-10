@@ -12,6 +12,17 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [turn, setTurn] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [translations, setTranslations] = useState({}); // 翻訳結果を保持
+  // 翻訳API呼び出し関数
+  const handleTranslate = async (msg, i) => {
+    const res = await fetch("http://localhost:8000/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: msg.content, direction: "en2ja" }),
+    });
+    const data = await res.json();
+    setTranslations((prev) => ({ ...prev, [i]: data.translated }));
+  };
 
   const resetSession = () => {
     // 進行中の処理を止める（念のため）
@@ -66,14 +77,37 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
+    <div
+      style={{
+        padding: "20px",
+        maxWidth: "600px",
+        margin: "auto",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <h1>🎙️ 英会話ボット（10ターンで終了）</h1>
-      <h2>今nターン目</h2>
-      <div style={{ marginBottom: "1rem" }}>
+      <div style={{ marginBottom: "1rem", textAlign: "center" }}>
         {messages.map((msg, i) => (
           <div key={i}>
             <strong>{msg.role === "user" ? "あなた" : "AI"}:</strong>{" "}
             {msg.content}
+            {msg.role === "assistant" && (
+              <>
+                <button
+                  style={{ marginLeft: "1em" }}
+                  onClick={() => handleTranslate(msg, i)}
+                >
+                  翻訳
+                </button>
+                {translations[i] && (
+                  <span style={{ color: "gray", marginLeft: "1em" }}>
+                    和訳: {translations[i]}
+                  </span>
+                )}
+              </>
+            )}
           </div>
         ))}
       </div>

@@ -3,6 +3,7 @@ from openai.error import RateLimitError, AuthenticationError, OpenAIError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from typing import Optional
 import os
 import traceback
 
@@ -26,6 +27,37 @@ app.add_middleware(
 class Msg(BaseModel):
     user_id: str
     text: str
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    direction: Optional[str] = "en2ja"  # "en2ja" or "ja2en"
+    
+@app.post("/translate")
+async def translate(req: TranslateRequest):
+    # directionで翻訳方向を切り替え可能
+    if req.direction == "ja2en":
+        system_prompt = "You are a translator that translates Japanese to English."
+        user_content = f"Translate the following text into English:\n{req.text}"
+    else:
+        system_prompt = "You are a translator that translates English to Japanese."
+        user_content = f"Translate the following text into Japanese:\n{req.text}"
+    translation_prompt = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content}
+    ]
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=translation_prompt,
+            max_tokens=128,
+            temperature=0.3
+        )
+        translated_text = response["choices"][0]["message"]["content"]
+        return {"translated": translated_text}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 conversations = {}
 MAX_TURNS = 10
