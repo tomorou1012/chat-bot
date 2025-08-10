@@ -123,7 +123,7 @@ export default function App() {
       <header className="app-header">
         <div className="app-title">
           <span className="logo">🤖</span>
-          <span>English Conversation Bot</span>
+          <span>ベらえもん</span>
         </div>
         <div className="header-actions">
           <button className="btn btn-danger" onClick={endSession} disabled={isListening}>
