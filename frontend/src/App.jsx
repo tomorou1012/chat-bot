@@ -12,6 +12,7 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [translations, setTranslations] = useState({}); // 翻訳結果を保持
+  const [showResetButton, setShowResetButton] = useState(false);
   // 翻訳API呼び出し関数
   const handleTranslate = async (msg, i) => {
     const res = await fetch("http://localhost:8000/translate", {
