@@ -10,8 +10,8 @@ const synth = window.speechSynthesis;
 export default function App() {
   const [messages, setMessages] = useState([]);
   const [isListening, setIsListening] = useState(false);
-  const [turn, setTurn] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [showResetButton, setShowResetButton] = useState(false);
 
   const resetSession = () => {
     // 進行中の処理を止める（念のため）
@@ -20,9 +20,36 @@ export default function App() {
 
     // 初期状態に戻す
     setMessages([]);
-    setTurn(0);
     setFeedback("");
     setIsListening(false);
+  };
+
+  const endSession = async () => {
+    if (!confirm("End the session now?")) return;
+
+    try {
+      const res = await fetch("http://localhost:8000/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: "demo_user", text: "" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || `Error ${res.status}`);
+        return;
+      }
+      const data = await res.json();
+
+      // フィードバックを表示（自動リセットはしない）
+      setFeedback(data.feedback);
+      setShowResetButton(true);  // 「Start over」ボタンを出す
+
+      // マイクと読み上げは停止（任意）
+      recognitionRef.current?.abort?.();
+      window.speechSynthesis.cancel();
+    } catch (e) {
+      alert(`Failed to end session: ${e.message}`);
+    }
   };
 
   const startListening = () => {
@@ -46,14 +73,6 @@ export default function App() {
 
     if (data.end) {
       setFeedback(data.feedback);
-      setTimeout(() => {
-        resetSession(); // 初期状態に戻す
-      }, 5000);
-      return; // 終了なので返す
-    }
-
-    if (data.end) {
-      setFeedback(data.feedback);
     } else {
       const assistantMessage = { role: "assistant", content: data.reply };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -62,13 +81,22 @@ export default function App() {
       synth.speak(utter);
     }
 
-    setTurn((prev) => prev + 1);
   };
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h1>🎙️ 英会話ボット（10ターンで終了）</h1>
-      <h2>今nターン目</h2>
+      {/* タイトル＋End sessionボタン */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>🎙️ 英会話ボット</h1>
+        <button
+          onClick={endSession}
+          disabled={isListening}
+          style={{ padding: "6px 10px" }}
+        >
+          End session
+        </button>
+      </div>
+
       <div style={{ marginBottom: "1rem" }}>
         {messages.map((msg, i) => (
           <div key={i}>
@@ -77,20 +105,31 @@ export default function App() {
           </div>
         ))}
       </div>
+
       {feedback && (
         <div
           style={{
             background: "red",
             padding: "10px",
             borderLeft: "5px solid red",
+            marginTop: 12,
           }}
         >
           <strong>💬 フィードバック:</strong> {feedback}
+          {showResetButton && (
+            <button
+              onClick={resetSession}
+              style={{ marginTop: 10, padding: "8px 12px" }}
+            >
+              Start over
+            </button>
+          )}
         </div>
       )}
+
       <button
         onClick={startListening}
-        disabled={isListening || turn >= 10}
+        disabled={isListening}
         style={{
           backgroundColor: isListening ? "#aaa" : "#007bff",
           color: "white",
@@ -104,4 +143,5 @@ export default function App() {
       </button>
     </div>
   );
+
 }
