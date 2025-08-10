@@ -100,10 +100,20 @@ export default function App() {
         margin: "auto",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: "center", // 横中央
+        justifyContent: "center", // 縦中央
+        height: "100vh", // 画面全体の高さ
+        boxSizing: "border-box", // padding込みで高さ計算
       }}
     >
       <h1>🎙️ 英会話ボット</h1>
+      <button
+        onClick={endSession}
+        disabled={isListening}
+        style={{ padding: "6px 10px" }}
+      >
+        End session
+      </button>
       <div style={{ marginBottom: "1rem", textAlign: "center" }}>
         {messages.map((msg, i) => (
           <div key={i}>
