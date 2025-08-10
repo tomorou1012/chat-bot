@@ -28,7 +28,6 @@ class Msg(BaseModel):
     text: str
 
 conversations = {}
-MAX_TURNS = 10
 
 SYSTEM_PROMPT = (
     "You are an English-only conversation partner for language practice. "
@@ -51,12 +50,6 @@ def chat(m: Msg):
         # ユーザー発言を追加
         conversations[uid].append({"role": "user", "content": m.text})
 
-        # ターン数チェック
-        user_turns = sum(1 for x in conversations[uid] if x["role"] == "user")
-        if user_turns >= MAX_TURNS:
-            fb = "📝 Great job! You completed 10 English turns. Keep your sentences clear and try a wider range of vocabulary next time."
-            conversations[uid] = []  # reset
-            return {"end": True, "feedback": fb}
 
         # 直近だけ送る（systemは必ず含める）
         base = [conversations[uid][0]]    # system
@@ -87,3 +80,31 @@ def chat(m: Msg):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/end")
+def end_session(m: Msg):
+    uid = m.user_id
+    # これまでのユーザー発話を取得
+    hist = conversations.get(uid, [])
+    user_msgs = [x["content"] for x in hist if x.get("role") == "user"]
+    total_turns = len(user_msgs)
+
+    # かんたんフィードバック（必要に応じて自由に改善OK）
+    avg_len = (sum(len(t.split()) for t in user_msgs) / total_turns) if total_turns else 0
+    tips = []
+    if avg_len < 6:
+        tips.append("Try forming slightly longer sentences.")
+    if total_turns < 5:
+        tips.append("Practice a bit more to build fluency.")
+    if not tips:
+        tips.append("Great pacing and clarity!")
+
+    feedback = (
+        f"📝 Session summary: You spoke {total_turns} turns in English. "
+        f"Avg. sentence length ≈ {avg_len:.1f} words. " + " ".join(tips)
+    )
+
+    # サーバー側の履歴をリセット
+    conversations[uid] = []
+
+    return {"feedback": feedback}
